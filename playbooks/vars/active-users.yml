@@ -1,0 +1,12 @@
+---
+default_setting: &default
+  append: no
+  create_home: yes
+  shell: "/bin/bash"
+  state: present
+  
+users:
+  - name: "sample-user"
+    allow_sudo: yes
+    authorized_key: "contents_of_your_id_rsa_pub"
+    <<: *default

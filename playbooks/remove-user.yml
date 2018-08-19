@@ -1,0 +1,19 @@
+---
+- hosts:
+    - all
+  become: true
+  vars_files:
+    - vars/inactive-users.yml
+  tasks:
+    - name: remove user
+      user:
+        name: "{{item}}"
+        state: absent
+        remove: true
+      with_items: "{{users}}"
+
+    - name: remove sudoers entry file
+      file:
+        path: "/etc/sudoers.d/{{item}}"
+        state: absent
+      with_items: "{{users}}"

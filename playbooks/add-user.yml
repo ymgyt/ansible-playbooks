@@ -1,0 +1,51 @@
+---
+- hosts:
+    - all
+  become: true
+  vars_files:
+    - vars/active-users.yml
+  tasks:
+    - debug: msg={{ item }}
+      with_items: "{{ users }}"
+
+    - name: add user
+      user:
+        name:   "{{item.name}}"
+        append: "{{item.append}}"
+        create_home: "{{item.create_home}}"
+        shell:  "{{item.shell}}"
+        state:  "{{item.state}}"
+      with_items: "{{users}}"
+
+    - name: put ssh authorized_key file
+      authorized_key:
+        user: "{{item.name}}"
+        key: "{{item.authorized_key}}"
+        state: "{{item.state}}"
+      with_items: "{{users}}"
+
+    - name: put sudoers entry file if necessary
+      template:
+        src: "templates/sudoers_entry.j2"
+        dest: "/etc/sudoers.d/{{item.name}}"
+        force: yes
+        owner: root
+        group: root
+        mode: 0440
+        validate: 'bash -c "cat /etc/sudoers %s | visudo -cf-"'
+      vars:
+        user: "{{item.name}}"
+      with_items: "{{users}}"
+      when:
+        - item.allow_sudo
+
+    - name: remove sudoers entry file if necessary
+      file:
+        path: "/etc/sudoers.d/{{item.name}}"
+        state: absent
+      with_items: "{{users}}"
+      when:
+        - not item.allow_sudo
+          
+  
+  
